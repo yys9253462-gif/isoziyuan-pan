@@ -1,3 +1,5 @@
-export function onRequestGet({ params }) {
-  return Response.redirect(`/pickup.html?code=${encodeURIComponent(params.code)}`, 302);
+export function onRequestGet({ request, params }) {
+  const url = new URL("/pickup.html", request.url);
+  url.searchParams.set("code", params.code);
+  return Response.redirect(url.toString(), 302);
 }
