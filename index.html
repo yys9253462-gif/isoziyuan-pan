@@ -1,24 +1,76 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>爱搜云盘 · 文件取件</title><link rel="stylesheet" href="/style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>爱搜云盘 · 文件提取</title>
+  <link rel="stylesheet" href="/style.css?v=5">
 </head>
 <body class="center-page">
-  <main class="panel public-panel">
-    <div class="logo">⇩</div><p class="eyebrow">爱搜云盘 · Cloudflare 副本</p>
-    <h1>提取文件</h1><p class="muted">请输入 5 位取件码</p>
-    <form id="pickupForm"><div class="code-grid">
-      <input maxlength="1" inputmode="numeric" autofocus><input maxlength="1" inputmode="numeric"><input maxlength="1" inputmode="numeric"><input maxlength="1" inputmode="numeric"><input maxlength="1" inputmode="numeric">
-    </div><button id="pickupButton" disabled>立即提取</button></form>
-    <p class="hint">文件存储于 Cloudflare R2</p>
-  </main>
   <a class="admin-link" href="/admin.html">管理员登录</a>
+
+  <main class="panel public-panel">
+    <div class="logo">⇩</div>
+    <p class="eyebrow">爱搜云盘 · 极速提取</p>
+    <h1>提取文件</h1>
+    <p class="muted">请输入 5 位取件码</p>
+
+    <form id="pickupForm">
+      <div class="code-grid" role="group" aria-label="5 位取件码">
+        <input inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="第 1 位" autocomplete="one-time-code" autofocus>
+        <input inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="第 2 位">
+        <input inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="第 3 位">
+        <input inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="第 4 位">
+        <input inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="第 5 位">
+      </div>
+      <button id="pickupButton" class="button" disabled>立即提取</button>
+    </form>
+
+    <p class="hint">文件安全存储于 Cloudflare R2 / AWS S3</p>
+  </main>
+
   <script>
-    const boxes=[...document.querySelectorAll('.code-grid input')],button=document.querySelector('#pickupButton');
-    function sync(){button.disabled=boxes.some(x=>!x.value)}
-    boxes.forEach((box,i)=>{box.oninput=()=>{box.value=box.value.replace(/\D/g,'').slice(-1);if(box.value&&i<4)boxes[i+1].focus();sync()};box.onkeydown=e=>{if(e.key==='Backspace'&&!box.value&&i)boxes[i-1].focus()};box.onpaste=e=>{e.preventDefault();e.clipboardData.getData('text').replace(/\D/g,'').slice(0,5).split('').forEach((v,n)=>boxes[n].value=v);sync()}});
-    document.querySelector('#pickupForm').onsubmit=e=>{e.preventDefault();location.href='/pickup/'+boxes.map(x=>x.value).join('')};
+    const boxes = [...document.querySelectorAll('.code-grid input')];
+    const button = document.querySelector('#pickupButton');
+
+    function sync() {
+      button.disabled = boxes.some(x => !x.value.trim());
+    }
+
+    function fill(text) {
+      const digits = text.replace(/\D/g, '').slice(0, 5);
+      digits.split('').forEach((v, i) => {
+        if (boxes[i]) boxes[i].value = v;
+      });
+      const nextIdx = Math.min(digits.length, 4);
+      boxes[nextIdx].focus();
+      sync();
+    }
+
+    boxes.forEach((box, i) => {
+      box.oninput = () => {
+        box.value = box.value.replace(/\D/g, '').slice(-1);
+        if (box.value && i < 4) boxes[i + 1].focus();
+        sync();
+      };
+      box.onkeydown = e => {
+        if (e.key === 'Backspace' && !box.value && i > 0) boxes[i - 1].focus();
+        if (e.key === 'ArrowLeft' && i > 0) boxes[i - 1].focus();
+        if (e.key === 'ArrowRight' && i < 4) boxes[i + 1].focus();
+      };
+      box.onpaste = e => {
+        e.preventDefault();
+        fill(e.clipboardData.getData('text'));
+      };
+    });
+
+    document.querySelector('#pickupForm').onsubmit = e => {
+      e.preventDefault();
+      const code = boxes.map(x => x.value).join('');
+      if (/^\d{5}$/.test(code)) {
+        location.href = '/pickup/' + code;
+      }
+    };
   </script>
 </body>
 </html>
