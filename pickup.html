@@ -1,0 +1,7 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>提取文件 · 爱搜云盘</title><link rel="stylesheet" href="/style.css"></head>
+<body class="center-page"><main class="panel public-panel"><div class="logo">▤</div><p class="eyebrow" id="codeLabel">取件文件</p><h1 id="fileName">正在查询…</h1><p class="muted" id="fileMeta"></p><a id="download" class="button" hidden>下载文件</a><p class="hint">请确认文件来源可信后再下载</p><a class="back-link" href="/">返回取件页</a></main>
+<script>
+  const code=new URLSearchParams(location.search).get('code')||'';const label=document.querySelector('#codeLabel'),name=document.querySelector('#fileName'),meta=document.querySelector('#fileMeta'),download=document.querySelector('#download');label.textContent='取件码 '+code;
+  fetch('/api/pickup?code='+encodeURIComponent(code)).then(r=>r.json()).then(data=>{if(!data.ok)throw new Error(data.error||'取件失败');name.textContent=data.name;meta.textContent=(data.size/1024/1024).toFixed(2)+' MB'+(data.remaining===null?'':' · 剩余 '+data.remaining+' 次');download.href=data.downloadUrl;download.hidden=false}).catch(error=>{name.textContent=error.message;meta.textContent='请返回重新输入取件码'});
+</script></body></html>

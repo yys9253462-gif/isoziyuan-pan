@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "isoziyuan-pan",
+  "pages_build_output_dir": ".",
+  "compatibility_date": "2026-09-09",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "isoziyuan-pan-db",
+      "database_id": "109a673e-778b-4429-a4eb-a9742551a79e"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "R2",
+      "bucket_name": "forum-uploads"
+    }
+  ]
+}
