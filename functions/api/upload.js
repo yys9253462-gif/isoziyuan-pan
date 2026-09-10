@@ -1,6 +1,6 @@
 import { errorResponse, isAdmin, json, normalizePath, requireAdmin, splitPath, objectKey } from "../_lib.js";
 
-export async function onRequestPost({ request, env }) {
+async function handleUpload({ request, env }) {
   const denied = requireAdmin(await isAdmin(request, env));
   if (denied) return denied;
   const url = new URL(request.url);
@@ -21,3 +21,6 @@ export async function onRequestPost({ request, env }) {
     return errorResponse(error, "上传失败");
   }
 }
+
+export const onRequestPut = handleUpload;
+export const onRequestPost = handleUpload;
