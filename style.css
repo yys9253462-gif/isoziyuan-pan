@@ -306,3 +306,146 @@ button:hover, .button:hover {
     font-size: 12px;
   }
 }
+
+/* ============================================================
+   分享弹窗现代化 UI（Share Dialog）
+   ============================================================ */
+.share-dialog {
+  width: min(460px, calc(100% - 28px));
+}
+
+.share-label {
+  margin: 0 0 10px;
+  color: #8d9bb0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.share-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.share-option {
+  display: flex !important;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 14px 15px;
+  background: rgba(24, 35, 53, 0.7) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.09) !important;
+  border-radius: 13px !important;
+  box-shadow: none !important;
+  text-align: left;
+  transition: all 0.18s ease;
+}
+
+.share-option:hover {
+  background: rgba(99, 102, 241, 0.12) !important;
+  border-color: rgba(99, 102, 241, 0.35) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: none !important;
+}
+
+.share-option b {
+  font-size: 14px;
+  color: #e6ecfa;
+}
+
+.share-option small {
+  font-size: 11px;
+  font-weight: 400;
+  color: #74839b;
+}
+
+.share-option.active {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.22), rgba(139, 92, 246, 0.16)) !important;
+  border-color: rgba(124, 101, 255, 0.75) !important;
+  box-shadow: 0 8px 22px rgba(99, 102, 241, 0.28) !important;
+}
+
+.share-option.active b {
+  color: #fff;
+}
+
+.share-option.active small {
+  color: #b9b3f5;
+}
+
+.share-result {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.share-code-card {
+  padding: 16px 18px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.16), rgba(139, 92, 246, 0.10));
+  border: 1px solid rgba(124, 101, 255, 0.4);
+  border-radius: 14px;
+}
+
+.share-code-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  color: #a5b4fc;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.share-code-card strong {
+  display: block;
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  line-height: 1.1;
+  color: #fff;
+  text-shadow: 0 0 26px rgba(139, 92, 246, 0.55);
+  font-variant-numeric: tabular-nums;
+}
+
+.share-link-row {
+  display: flex;
+  gap: 9px;
+}
+
+.share-link-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  color: #cbd5e1;
+  font-size: 13px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 11px;
+  outline: none;
+}
+
+.share-link-row input:focus {
+  border-color: rgba(124, 101, 255, 0.6);
+}
+
+.share-link-row .button {
+  padding: 12px 18px;
+  white-space: nowrap;
+}
+
+.share-result-hint {
+  margin: 0;
+  color: #67ddb0;
+  font-size: 12px;
+}
+
+@media (max-width: 720px) {
+  .share-options {
+    grid-template-columns: 1fr;
+  }
+  .share-link-row {
+    flex-direction: column;
+  }
+}
