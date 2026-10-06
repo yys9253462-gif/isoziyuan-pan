@@ -1,0 +1,5 @@
+* text=auto
+*.sh *.bash *.py  text eol=lf
+*.js *.json *.jsonc *.sql *.html *.css  text eol=lf
+*.png *.jpg *.jpeg *.gif *.ico  binary
+*.md text eol=lf
