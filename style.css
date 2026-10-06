@@ -84,6 +84,22 @@
   word-break: break-word;
 }
 
+/* 分享者留下的中文标题说明：显示在文件名上方 */
+.share-title {
+  margin: 0 0 var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--text);
+  text-align: left;
+  word-break: break-word;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--r-md);
+}
+
 .muted {
   margin: var(--sp-2) 0 0;
   font-size: 13px;

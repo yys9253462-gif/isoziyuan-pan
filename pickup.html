@@ -6,12 +6,13 @@
   <title>提取文件 · 爱搜云盘</title>
   <meta name="description" content="输入 5 位取件码即可提取爱搜云盘中的文件，支持有效期校验与过期提示。">
   <link rel="stylesheet" href="/tokens.css?v=1">
-  <link rel="stylesheet" href="/style.css?v=7">
+  <link rel="stylesheet" href="/style.css?v=8">
 </head>
 <body class="center-page">
   <main class="panel public-panel is-loading">
     <div class="logo">▤</div>
     <p class="eyebrow" id="codeLabel">取件文件</p>
+    <p class="share-title" id="shareTitle" hidden></p>
     <h1 id="fileName">正在查询…</h1>
     <p class="muted" id="fileMeta"></p>
     <a id="download" class="button" hidden>下载文件</a>
@@ -22,6 +23,7 @@
   <script>
     const code = new URLSearchParams(location.search).get('code') || '';
     const label = document.querySelector('#codeLabel');
+    const title = document.querySelector('#shareTitle');
     const name = document.querySelector('#fileName');
     const meta = document.querySelector('#fileMeta');
     const download = document.querySelector('#download');
@@ -36,6 +38,8 @@
       .then(data => {
         if (!data.ok) throw new Error(data.error || '取件失败');
         panel.classList.remove('is-loading');
+        // 分享者留下的中文标题说明，排在文件名上方
+        if (data.title) { title.textContent = data.title; title.hidden = false; }
         name.textContent = data.name;
         const sizeMb = (data.size / 1024 / 1024).toFixed(2) + ' MB';
         const rem = data.remaining === null ? '' : ' · 剩余 ' + data.remaining + ' 次';

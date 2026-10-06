@@ -19,6 +19,7 @@
 - 仿蜂巢/快递柜的 **5 位数字提取码** 体验，支持键盘逐格自动跳焦、支持直接粘贴整段取件码。
 - 支持分享链接直达（如 `/pickup/12345`），进入即自动解析并下载。
 - 分享规则高度可控：支持配置**到期时间**、**最大下载次数（阅后即焚 / 限次下载）**或**永久有效**。
+- 每个取件码可附一条**简短中文标题说明**，取件页顶部直接展示，接收方一眼知道这份文件是什么。
 
 ### 2. 💽 双对象存储引擎（R2 + AWS S3）
 - 原生整合 **Cloudflare R2**（全球零出网流量费，高性价比）。
@@ -54,13 +55,14 @@
 │   │   ├── upload-url.js       # 获取大文件直传预签名 URL
 │   │   ├── upload-complete.js  # 文件上传完成回调与 D1 元数据落库
 │   │   ├── download.js         # 鉴权下载链接签发
-│   │   ├── share.js            # 5 位取件码生成与有效性校验
+│   │   ├── share.js            # 5 位取件码生成与有效性校验（带中文标题说明）
 │   │   ├── delete.js           # 文件/目录级联删除
 │   │   └── folder.js           # 文件夹新建与路径管理
 │   └── pickup/
 │       └── [code].js           # `/pickup/:code` 动态提取路由解析
 ├── schema.sql                  # D1 SQLite 数据库建表文件
 ├── migration-aws.sql           # AWS S3 扩展表结构迁移文件
+├── migration-share-title.sql    # 分享标题说明字段迁移（shares.title）
 ├── wrangler.jsonc              # Cloudflare Wrangler 配置文件（D1 + R2 绑定）
 ├── 一键发布到Cloudflare.bat     # Windows 本地自动化一键 Git 提交 + 生产直推脚本
 └── README.md                   # 项目说明文档

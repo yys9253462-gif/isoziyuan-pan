@@ -84,3 +84,16 @@ export function errorResponse(error, fallback = "操作失败") {
   console.error(JSON.stringify({ error: String(error?.message || error || fallback) }));
   return json({ error: fallback }, 500);
 }
+
+export const TITLE_MAX = 60;
+
+// 分享标题说明：剔除控制字符与零宽字符、压缩空白、限长
+// （标题会原样渲染在公开取件页上，必须挡住换行注入与不可见字符）
+export function cleanTitle(value) {
+  const text = String(value ?? "")
+    .replace(/[\u0000-\u001f\u007f]/g, " ")
+    .replace(/[\u200b-\u200f\u2028\u2029\ufeff]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return text.slice(0, TITLE_MAX);
+}

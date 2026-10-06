@@ -17,6 +17,7 @@ CREATE INDEX IF NOT EXISTS idx_files_storage_folder ON files(storage, folder, ki
 CREATE TABLE IF NOT EXISTS shares (
   code TEXT PRIMARY KEY,
   file_id TEXT NOT NULL REFERENCES files(id) ON DELETE CASCADE,
+  title TEXT NOT NULL DEFAULT '',
   expires_at INTEGER NOT NULL DEFAULT 0,
   remaining INTEGER,
   downloads INTEGER NOT NULL DEFAULT 0,
