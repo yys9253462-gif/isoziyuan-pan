@@ -155,3 +155,16 @@ npx wrangler pages deploy . --project-name isoziyuan-pan --branch main
 ## 📄 开源协议
 
 本项目采用 [MIT License](LICENSE) 协议开源，欢迎自由使用、修改与学习！
+## 多账号 R2（2026-10-14）
+
+后台侧栏 → **R2 账号管理** → **添加 R2 账号**。填写空间名称、目标 Cloudflare Account ID、桶名、路径前缀及 R2 S3 对象读写密钥，然后测试并保存。支持同一账号不同桶，也支持不同账号的桶；保存时会用临时对象验证写入、读取和删除，并清理临时对象。
+
+- 原生 R2 绑定继续作为原空间，不迁移旧文件，不修改旧 ID 和取件码。
+- 每个外部 R2 连接使用固定 ID，文件列表、文件夹和对象路由按连接隔离；同名文件不会跨空间覆盖。
+- 密钥通过 SESSION_SECRET 派生的 AES-GCM 密钥加密入库，读取 API 不返回密钥；编辑时留空保留原值。
+- 账号、桶、前缀和管辖区域不能原地改动；需要更换存储定位时新增连接。非空连接不能删除。
+- 外部 R2 使用 region=auto 的 S3 预签名直传/下载。首次上传前在目标桶配置弹窗提供的 CORS 策略。
+- 新连接不会自动导入桶内已有对象；用量统计按前缀扫描，容量只是参考值，不是账号级剩余额度或硬性配额。
+- 首次升级旧数据库时执行一次 `wrangler d1 execute isoziyuan-pan-db --remote --file migration-multi-r2.sql`。新数据库使用 schema.sql（已含 storage_id），不要重复执行 ALTER TABLE。
+- 设置 CF_ACCOUNT_ID 为原生 R2 所属账号 ID，用于防止外部连接与原生空间的前缀重叠。
+- 回归测试：`node tests/multi-r2.mjs`，使用内存 SQLite 和 S3 测试适配器，不触碰真实文件。
