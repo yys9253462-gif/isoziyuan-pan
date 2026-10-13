@@ -964,50 +964,6 @@ td:first-child {
   color: var(--text-dim);
 }
 
-.share-title-input {
-  width: 100%;
-  padding: 11px 12px;
-  font: inherit;
-  font-size: 14px;
-  color: var(--text);
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-}
-
-.share-title-input:focus-visible {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-ring);
-}
-
-.share-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin: 9px 0 var(--sp-4);
-}
-
-.share-title-count {
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-dim);
-}
-
-.share-title-echo {
-  margin: var(--sp-3) 0 0;
-  padding: 10px 12px;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.6;
-  color: var(--text);
-  word-break: break-word;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-}
-
 .share-options {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1103,6 +1059,81 @@ td:first-child {
   margin: 0;
   font-size: 11.5px;
   color: var(--success);
+}
+
+/* ---------- 10b. 已有分享列表 ---------- */
+.share-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.share-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+}
+.share-item-code {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.share-item-code strong {
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.share-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+.share-item-link {
+  color: var(--accent-text);
+  text-decoration: none;
+}
+.share-item-link:hover {
+  text-decoration: underline;
+}
+
+/* ---------- 10c. 文件行「已分享」徽标 ---------- */
+.share-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.7;
+  vertical-align: middle;
+  color: var(--accent-text);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-ring);
+  cursor: default;
+}
+.share-badge.expired {
+  color: var(--text-dim);
+  background: var(--surface-3);
+  border-color: var(--border-strong);
+}
+.share-badge-dl {
+  margin-left: 7px;
+  font-style: normal;
+  font-weight: 600;
+  color: var(--text-muted);
 }
 
 /* ---------- 11. 吐司 ---------- */
@@ -1213,3 +1244,5 @@ td:first-child {
     transition-duration: 0.01ms !important;
   }
 }
+
+.r2-connection{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}.r2-connection>div{flex:1;min-width:0}.r2-connection small{display:block;color:var(--text-muted);overflow-wrap:anywhere}.settings-grid select{width:100%;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-1);color:inherit}#r2Connections{margin-bottom:16px}#r2Spaces b,#r2Spaces small{overflow-wrap:anywhere}#r2Spaces{max-height:32vh;overflow-y:auto}#r2Dialog pre{max-height:200px;overflow:auto}

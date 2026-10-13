@@ -3,6 +3,7 @@
   "name": "isoziyuan-pan",
   "pages_build_output_dir": ".",
   "compatibility_date": "2026-09-09",
+  "vars": { "CF_ACCOUNT_ID": "c21081d20d9d782cf3ce39dddc17645b" },
   "d1_databases": [
     {
       "binding": "DB",

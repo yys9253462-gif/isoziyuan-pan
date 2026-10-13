@@ -6,6 +6,16 @@ function randomCode() {
   return String(values[0] % 100000).padStart(5, "0");
 }
 
+// Preserve the production UI's existing share history feature.
+export async function onRequestGet({request,env}) {
+  const denied=requireAdmin(await isAdmin(request,env));if(denied)return denied;
+  const fileId=new URL(request.url).searchParams.get('fileId');
+  if(!fileId)return json({error:'缺少文件 ID'},400);
+  const rows=await env.DB.prepare('SELECT * FROM shares WHERE file_id = ?1 ORDER BY created_at DESC').bind(fileId).all();
+  const now=Math.floor(Date.now()/1000);
+  return json({shares:(rows.results||[]).map(s=>({code:s.code,title:s.title||'',expiresAt:Number(s.expires_at),remaining:s.remaining,downloads:Number(s.downloads||0),expired:Boolean(s.expires_at&&Number(s.expires_at)<now),exhausted:s.remaining!==null&&Number(s.remaining)<=0}))});
+}
+
 export async function onRequestPost({ request, env }) {
   const denied = requireAdmin(await isAdmin(request, env));
   if (denied) return denied;

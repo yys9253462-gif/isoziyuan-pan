@@ -7,7 +7,7 @@ async function handleUpload({ request, env }) {
   const path = normalizePath(url.searchParams.get("path"));
   const contentType = (request.headers.get("Content-Type") || "application/octet-stream").slice(0, 200);
   const { folder, name } = splitPath(path);
-  if (url.searchParams.get("storage") === "aws") return json({ error: "AWS 请使用预签名上传" }, 400);
+  if (url.searchParams.get("storage") && url.searchParams.get("storage") !== 'r2') return json({ error: "外部存储请使用预签名上传" }, 400);
   if (!path || !name || name.length > 240 || !request.body) return json({ error: "文件或路径无效" }, 400);
   const id = crypto.randomUUID();
   const now = Math.floor(Date.now() / 1000);

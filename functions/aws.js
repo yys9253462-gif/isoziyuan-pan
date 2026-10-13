@@ -26,10 +26,11 @@ function timestamp() {
 }
 
 function canonicalQuery(params) {
-  return [...params.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([key, value]) => `${encode(key)}=${encode(value)}`).join("&");
+  return [...params.entries()].map(([k,v])=>[encode(k),encode(v)]).sort(([a,av],[b,bv])=>a<b?-1:a>b?1:av<bv?-1:av>bv?1:0).map(([key, value]) => `${key}=${value}`).join("&");
 }
 
 function awsEndpoint(config) {
+  if (config.accountId) return `https://${config.accountId}${config.jurisdiction ? '.' + config.jurisdiction : ''}.r2.cloudflarestorage.com/${config.bucket}`;
   return `https://${config.bucket}.s3.${config.region}.amazonaws.com`;
 }
 
@@ -42,7 +43,7 @@ export async function presignedUrl(config, method, key, options = {}) {
   const { amzDate, date } = timestamp();
   const host = new URL(awsEndpoint(config)).host;
   const encodedKey = normalizePath(key).split("/").map(encode).join("/");
-  const canonicalUri = `/${encodedKey}`;
+  const canonicalUri = `${new URL(awsEndpoint(config)).pathname.replace(/\/$/, '')}/${encodedKey}`;
   const params = new URLSearchParams({
     "X-Amz-Algorithm": "AWS4-HMAC-SHA256",
     "X-Amz-Credential": `${config.accessKey}/${date}/${config.region}/s3/aws4_request`,
@@ -61,7 +62,7 @@ export async function presignedUrl(config, method, key, options = {}) {
   const kService = await hmac(kRegion, "s3");
   const kSigning = await hmac(kService, "aws4_request");
   params.set("X-Amz-Signature", hex(await hmac(kSigning, stringToSign)));
-  return `${awsEndpoint(config)}${canonicalUri}?${canonicalQuery(params)}`;
+  return `${new URL(awsEndpoint(config)).origin}${canonicalUri}?${canonicalQuery(params)}`;
 }
 
 export async function awsRequest(config, method, key, options = {}) {

@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS files (
   id TEXT PRIMARY KEY,
   storage TEXT NOT NULL DEFAULT 'r2' CHECK (storage IN ('r2', 'aws')),
+  storage_id TEXT NOT NULL DEFAULT '',
   object_key TEXT NOT NULL UNIQUE,
   name TEXT NOT NULL,
   folder TEXT NOT NULL DEFAULT '',

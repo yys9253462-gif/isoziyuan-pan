@@ -1,6 +1,7 @@
 import { isAdmin, json, requireAdmin, errorResponse } from "../_lib.js";
 import { presignedUrl } from "../aws.js";
 import { getAwsConfig, reserveAwsTransfer } from "../storage.js";
+import { remoteDownload } from '../r2-accounts.js';
 
 export async function onRequestGet({ request, env }) {
   const denied = requireAdmin(await isAdmin(request, env));
@@ -10,6 +11,7 @@ export async function onRequestGet({ request, env }) {
   try {
     const row = await env.DB.prepare("SELECT * FROM files WHERE id = ?1 AND kind = 'file'").bind(id).first();
     if (!row) return json({ error: "文件不存在" }, 404);
+    if(row.storage_id)return Response.redirect(await remoteDownload(env,row),302);
     if (row.storage === "aws") {
       const config = await getAwsConfig(env);
       if (!config.enabled || !(await reserveAwsTransfer(env, config, row.size))) return json({ error: "AWS 本月下载流量已用完或未启用" }, 429);
