@@ -51,6 +51,31 @@ export function clearSessionCookie() {
   return `${SESSION_COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`;
 }
 
+// 取件人机验证：Turnstile 通过后签发 10 分钟有效、绑定取件码的下载票据
+const PICKUP_TICKET_TTL = 60 * 10;
+
+export async function verifyTurnstile(request, env, token) {
+  if (!token || !env.TURNSTILE_SECRET) return false;
+  const body = new FormData();
+  body.append("secret", env.TURNSTILE_SECRET);
+  body.append("response", token);
+  const ip = request.headers.get("CF-Connecting-IP");
+  if (ip) body.append("remoteip", ip);
+  const result = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", { method: "POST", body }).then((r) => r.json()).catch(() => null);
+  return Boolean(result?.success);
+}
+
+export async function pickupTicket(env, code) {
+  const expires = Math.floor(Date.now() / 1000) + PICKUP_TICKET_TTL;
+  return `${expires}.${await sign(`pickup:${code}:${expires}`, env.SESSION_SECRET)}`;
+}
+
+export async function verifyPickupTicket(env, code, ticket) {
+  const [expires, signature] = String(ticket || "").split(".");
+  if (!expires || !signature || Number(expires) < Math.floor(Date.now() / 1000)) return false;
+  return constantTimeEqual(signature, await sign(`pickup:${code}:${expires}`, env.SESSION_SECRET));
+}
+
 export function json(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json; charset=utf-8", ...headers } });
 }

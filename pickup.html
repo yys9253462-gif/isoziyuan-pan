@@ -14,6 +14,7 @@
     <p class="eyebrow" id="codeLabel">取件文件</p>
     <h1 id="fileName">正在查询…</h1>
     <p class="muted" id="fileMeta"></p>
+    <div id="turnstile" class="cf-turnstile"></div>
     <a id="download" class="button" hidden>下载文件</a>
     <p class="hint">请确认文件来源可信后再下载</p>
     <a class="back-link" href="/">← 返回取件页</a>
@@ -31,7 +32,16 @@
       label.textContent = '取件码 ' + code;
     }
 
-    fetch('/api/pickup?code=' + encodeURIComponent(code))
+    // 先过 Turnstile 人机验证，拿到 token 再查询取件码
+    window.onTurnstileLoad = () => {
+      turnstile.render('#turnstile', {
+        sitekey: '0x4AAAAAAFb6Yo8w2o7Tq8Z6',
+        callback: token => { document.querySelector('#turnstile').hidden = true; lookup(token); },
+        'error-callback': () => showError(new Error('人机验证加载失败，请刷新页面重试'))
+      });
+    };
+
+    const lookup = token => fetch('/api/pickup?code=' + encodeURIComponent(code) + '&cf-turnstile-response=' + encodeURIComponent(token))
       .then(r => r.json())
       .then(data => {
         if (!data.ok) throw new Error(data.error || '取件失败');
@@ -43,7 +53,9 @@
         download.href = data.downloadUrl;
         download.hidden = false;
       })
-      .catch(error => {
+      .catch(error => showError(error));
+
+    function showError(error) {
         // 把浏览器/网络的原始报错翻译成用户看得懂的话，避免直接把 "Failed to fetch" 丢给用户
         const raw = String((error && error.message) || '');
         const friendly = /fetch|network|load failed|timeout/i.test(raw) ? '网络异常，请稍后重试' : (raw || '取件失败');
@@ -52,7 +64,8 @@
         label.textContent = '取件失败';
         name.textContent = friendly;
         meta.textContent = '请返回重新输入取件码';
-      });
+    }
   </script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad&render=explicit" async defer></script>
 </body>
 </html>

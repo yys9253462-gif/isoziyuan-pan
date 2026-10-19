@@ -1,11 +1,13 @@
-import { errorResponse, json } from "../_lib.js";
+import { errorResponse, json, verifyPickupTicket } from "../_lib.js";
 import { presignedUrl } from "../aws.js";
 import { getAwsConfig, reserveAwsTransfer } from "../storage.js";
 import { remoteDownload } from '../r2-accounts.js';
 
 export async function onRequestGet({ request, env }) {
-  const code = new URL(request.url).searchParams.get("code")?.trim() || "";
+  const params = new URL(request.url).searchParams;
+  const code = params.get("code")?.trim() || "";
   if (!/^\d{5}$/.test(code)) return json({ error: "取件码无效" }, 400);
+  if (!(await verifyPickupTicket(env, code, params.get("t")))) return json({ error: "下载链接已失效，请重新打开取件页" }, 403);
   try {
     const row = await env.DB.prepare("SELECT shares.*, files.name, files.size, files.storage, files.storage_id, files.content_type, files.object_key FROM shares JOIN files ON files.id = shares.file_id WHERE shares.code = ?1").bind(code).first();
     if (!row || (row.expires_at && Number(row.expires_at) < Math.floor(Date.now() / 1000))) return json({ error: "取件码无效或已过期" }, 404);
