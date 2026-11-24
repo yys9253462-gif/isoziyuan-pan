@@ -17,7 +17,7 @@ export function onRequestGet({ request, params }) {
     headers: {
       Location: target.toString(),
       "Cache-Control": "no-store",
-      "Referrer-Policy": "no-referrer",
+      "Referrer-Policy": "same-origin",
       "X-Content-Type-Options": "nosniff",
     },
   });

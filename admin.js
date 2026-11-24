@@ -444,7 +444,7 @@
         const actionsHtml =
           file.kind === "folder"
             ? `<button type="button" class="table-button" data-open="${openPath}">打开</button>`
-            : `<a class="table-button" href="/api/download?id=${encodeURIComponent(file.id)}" rel="noopener noreferrer">下载</a><button type="button" class="table-button" data-share="${safeId}">分享</button>`;
+            : `<a class="table-button" href="/api/download?id=${encodeURIComponent(file.id)}" rel="noopener">下载</a><button type="button" class="table-button" data-share="${safeId}">分享</button>`;
 
         return `<tr><td class="col-name"><div class="file-name">${nameCell}</div></td><td class="col-size">${
           file.kind === "folder" ? "文件夹" : esc(fmt(file.size))

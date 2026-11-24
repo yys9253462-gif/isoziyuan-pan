@@ -193,7 +193,7 @@ const sameOriginFiles = await runApi(files, "GET", "/api/files", { headers: { Co
 eq(sameOriginFiles.status, 200, "同源合法列表请求应成功");
 eq(sameOriginFiles.headers.get("X-Frame-Options"), "DENY", "接口应附带防点击劫持头");
 eq(sameOriginFiles.headers.get("X-Content-Type-Options"), "nosniff", "接口应附带防嗅探头");
-eq(sameOriginFiles.headers.get("Referrer-Policy"), "no-referrer", "接口应附带来源隐藏头");
+eq(sameOriginFiles.headers.get("Referrer-Policy"), "same-origin", "接口应附带同源来源策略头");
 
 // 4. 取件短链重定向校验
 const badPickupHost = pickupRedirect.onRequestGet({ request: new Request("https://isoziyuan-pan.pages.dev/pickup/12345"), params: { code: "12345" } });

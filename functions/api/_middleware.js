@@ -18,7 +18,7 @@ export async function onRequest({ request, next }) {
   const headers = new Headers(response.headers);
   if (!headers.has("X-Content-Type-Options")) headers.set("X-Content-Type-Options", "nosniff");
   if (!headers.has("X-Frame-Options")) headers.set("X-Frame-Options", "DENY");
-  if (!headers.has("Referrer-Policy")) headers.set("Referrer-Policy", "no-referrer");
+  if (!headers.has("Referrer-Policy")) headers.set("Referrer-Policy", "same-origin");
   if (!headers.has("Cache-Control")) headers.set("Cache-Control", "no-store");
   if (!headers.has("Content-Security-Policy")) headers.set("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'");
   return new Response(response.body, {
