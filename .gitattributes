@@ -3,6 +3,8 @@
 *.bash text eol=lf
 *.py text eol=lf
 *.js text eol=lf
+*.mjs text eol=lf
+_headers text eol=lf
 *.json text eol=lf
 *.jsonc text eol=lf
 *.sql text eol=lf

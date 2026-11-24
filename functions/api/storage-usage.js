@@ -6,15 +6,11 @@ import {
   readUsageCache,
   scanAwsUsage,
   scanR2Usage,
-  writeUsageCache
+  writeUsageCache,
 } from "../storage.js";
 import { PREFIX, errorResponse, isAdmin, json, normalizePath, requireAdmin } from "../_lib.js";
 
-/**
- * GET /api/storage-usage
- * 返回当前储存桶已用大小（真实遍历，只统计本网盘前缀）。
- * 默认走缓存（TTL 10 分钟），带 ?refresh=1 时强制重新遍历。
- */
+// 返回储存桶已用大小：默认走缓存，带刷新参数时强制重新遍历
 export async function onRequestGet({ request, env }) {
   const denied = requireAdmin(await isAdmin(request, env));
   if (denied) return denied;
@@ -33,12 +29,39 @@ export async function onRequestGet({ request, env }) {
     const [r2, aws] = await Promise.all([
       scanR2Usage(env)
         .then((value) => ({ ok: true, ...value }))
-        .catch((error) => ({ ...(previous.r2?.ok ? previous.r2 : { bucket: R2_BUCKET_NAME, prefix: PREFIX, bytes: 0, objects: 0, pages: 0, limited: false }), ok: false, stale: Boolean(previous.r2?.ok), error: String(error?.message || error) })),
+        .catch((error) => {
+          console.error(JSON.stringify({ scope: "scanR2Usage", error: String(error?.message || error) }));
+          return {
+            ...(previous.r2?.ok ? previous.r2 : { bucket: R2_BUCKET_NAME, prefix: PREFIX, bytes: 0, objects: 0, pages: 0, limited: false }),
+            ok: false,
+            stale: Boolean(previous.r2?.ok),
+            error: "默认储存桶用量统计失败，请稍后重试",
+          };
+        }),
       config.enabled
         ? scanAwsUsage(config)
             .then((value) => ({ ok: true, ...value }))
-            .catch((error) => ({ ...(previous.aws?.ok ? previous.aws : { bucket: config.bucket, prefix: normalizePath(config.prefix || "") || "(整桶)", bytes: 0, objects: 0, pages: 0, limited: false }), ok: false, stale: Boolean(previous.aws?.ok), error: String(error?.message || error) }))
-        : Promise.resolve({ ok: true, enabled: false, bucket: config.bucket, prefix: normalizePath(config.prefix || "") || "(整桶)", bytes: 0, objects: 0, pages: 0, limited: false })
+            .catch((error) => {
+              console.error(JSON.stringify({ scope: "scanAwsUsage", error: String(error?.message || error) }));
+              return {
+                ...(previous.aws?.ok
+                  ? previous.aws
+                  : { bucket: config.bucket, prefix: normalizePath(config.prefix || "") || "(整桶)", bytes: 0, objects: 0, pages: 0, limited: false }),
+                ok: false,
+                stale: Boolean(previous.aws?.ok),
+                error: "外部储存桶用量统计失败，请检查读取权限",
+              };
+            })
+        : Promise.resolve({
+            ok: true,
+            enabled: false,
+            bucket: config.bucket,
+            prefix: normalizePath(config.prefix || "") || "(整桶)",
+            bytes: 0,
+            objects: 0,
+            pages: 0,
+            limited: false,
+          }),
     ]);
 
     const payload = { at: now, r2, aws };

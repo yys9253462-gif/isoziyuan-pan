@@ -1,36 +1,104 @@
 /* ============================================================
    爱搜云盘 · 公开取件页样式
    --------------------------------------------
-   服务页面：index.html（输入取件码）、pickup.html（文件落地页）
-   设计令牌来自 tokens.css；后台样式见 admin.css
+   覆盖页面：取件码首页、取件落地页
+   设计令牌全部来自全局令牌文件，保持骨架与视觉完整自洽
    ============================================================ */
 
-/* ---------- 1. 页面骨架 ---------- */
-/* 居中容器：取件页的一切都以「一屏之内、无需滚动」为目标 */
+/* ---------- 1. 页面居中骨架与氛围层 ---------- */
 .center-page {
   position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
   min-height: 100dvh;
-  padding: var(--sp-6);
-  overflow: hidden;
+  padding:
+    max(var(--sp-6), env(safe-area-inset-top))
+    max(var(--sp-5), env(safe-area-inset-right))
+    max(var(--sp-6), env(safe-area-inset-bottom))
+    max(var(--sp-5), env(safe-area-inset-left));
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
-/* 背景光晕（纯装饰，不参与交互） */
+/* 背景细点阵与柔和聚光，克制营造精密工具感 */
 .center-page::before {
   content: "";
-  position: absolute;
-  width: min(620px, 130vw);
-  height: min(620px, 130vw);
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.17), transparent 66%);
-  filter: blur(30px);
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.065) 1px, transparent 1px);
+  background-size: 24px 24px;
+  mask-image: radial-gradient(ellipse 68% 60% at 50% 45%, #000 18%, transparent 78%);
+  -webkit-mask-image: radial-gradient(ellipse 68% 60% at 50% 45%, #000 18%, transparent 78%);
   pointer-events: none;
+  z-index: 0;
 }
 
-/* ---------- 2. 取件面板 ---------- */
+.center-page::after {
+  content: "";
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: min(640px, 130vw);
+  height: min(640px, 130vw);
+  transform: translate(-50%, -52%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.16), transparent 66%);
+  filter: blur(36px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ---------- 2. 顶部管理员入口 ---------- */
+.admin-link {
+  position: fixed;
+  top: max(var(--sp-5), env(safe-area-inset-top));
+  right: max(var(--sp-5), env(safe-area-inset-right));
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 8px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: none;
+  background: var(--surface-glass);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: var(--shadow-sm);
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease),
+    background var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+
+.admin-link svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  opacity: 0.85;
+}
+
+.admin-link:hover {
+  color: var(--text);
+  background: var(--surface-2);
+  border-color: var(--accent-border);
+  transform: translateY(-1px);
+}
+
+.admin-link:focus,
+.admin-link:focus-visible {
+  outline: none;
+  color: var(--text);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+
+/* ---------- 3. 取件主面板 ---------- */
 .panel {
   background: var(--surface-1);
   border: 1px solid var(--border);
@@ -43,51 +111,102 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: min(440px, 100%);
-  padding: 34px 30px 26px;
+  width: min(452px, 100%);
+  padding: 36px 32px 28px;
   text-align: center;
   background: var(--surface-1);
-  border: 1px solid var(--border);
-  border-radius: var(--r-xl);
-  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-2xl);
+  box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  animation: panel-enter 0.32s var(--ease) both;
+}
+
+/* 顶部极细高光折线 */
+.public-panel::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 20%;
+  right: 20%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent-border), transparent);
+  pointer-events: none;
+}
+
+@keyframes panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .public-panel .logo {
   display: grid;
   place-items: center;
-  width: 52px;
-  height: 52px;
+  width: 54px;
+  height: 54px;
   margin-bottom: var(--sp-4);
-  font-size: 25px;
-  font-weight: 800;
-  color: #fff;
-  border-radius: 15px;
+  color: var(--text);
+  border-radius: 16px;
   background: var(--accent-gradient);
-  box-shadow: 0 10px 24px -8px rgba(99, 102, 241, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  box-shadow: 0 12px 26px -8px rgba(99, 102, 241, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+
+.public-panel .logo svg {
+  width: 26px;
+  height: 26px;
 }
 
 .eyebrow {
-  margin: 0 0 var(--sp-2);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 var(--sp-3);
+  padding: 4px 11px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   color: var(--accent-text);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--r-pill);
+}
+
+.eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+
+.eyebrow-mono {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.1em;
 }
 
 .public-panel h1 {
   margin: 0;
-  font-size: 26px;
+  font-size: 25px;
   font-weight: 700;
+  line-height: 1.3;
   letter-spacing: -0.025em;
   color: var(--text);
-  word-break: break-word;
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
 }
 
 .muted {
   margin: var(--sp-2) 0 0;
   font-size: 13px;
   color: var(--text-muted);
+  text-wrap: pretty;
 }
 
 .public-panel form {
@@ -95,21 +214,44 @@
   margin-top: var(--sp-6);
 }
 
-/* ---------- 3. 取件码格子 ---------- */
+/* ---------- 4. 五位取件码输入格子 ---------- */
 .code-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 10px;
-  margin: 0 0 var(--sp-5);
+  margin: 0;
+}
+
+.code-grid.is-shake {
+  animation: code-shake 0.34s var(--ease);
+}
+
+@keyframes code-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  22% {
+    transform: translateX(-6px);
+  }
+  45% {
+    transform: translateX(6px);
+  }
+  68% {
+    transform: translateX(-4px);
+  }
+  85% {
+    transform: translateX(3px);
+  }
 }
 
 .code-grid input {
   width: 100%;
-  height: 60px;
+  height: 62px;
   margin: 0;
   padding: 0;
   font-family: var(--mono);
-  font-size: 24px;
+  font-size: 25px;
   font-weight: 700;
   line-height: 1;
   text-align: center;
@@ -123,107 +265,393 @@
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease),
     background var(--dur) var(--ease), transform var(--dur) var(--ease);
 }
+
 .code-grid input:hover {
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: var(--border-highlight);
 }
+
+.code-grid input.is-filled {
+  background: var(--surface-2);
+  border-color: var(--accent-border);
+}
+
 .code-grid input:focus,
 .code-grid input:focus-visible {
   border-color: var(--accent);
   background: var(--surface-2);
-  box-shadow: 0 0 0 4px var(--accent-ring), 0 0 26px rgba(99, 102, 241, 0.22);
+  box-shadow: 0 0 0 4px var(--accent-ring), 0 0 24px rgba(99, 102, 241, 0.2);
   transform: translateY(-2px);
 }
 
-/* ---------- 4. 主按钮 ---------- */
+/* 取件码输入辅助条 */
+.code-helper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  min-height: 28px;
+  margin: var(--sp-3) 0 var(--sp-5);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.code-helper-text {
+  text-align: left;
+}
+
+.code-clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: auto !important;
+  padding: 4px 9px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: var(--text-muted) !important;
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--r-sm) !important;
+  box-shadow: none !important;
+}
+
+.code-clear:hover {
+  color: var(--text) !important;
+  background: var(--surface-3) !important;
+  border-color: var(--border-strong) !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ---------- 5. 主操作按钮与次级按钮 ---------- */
 .public-panel .button,
 .public-panel button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   width: 100%;
-  padding: 14px var(--sp-4);
+  min-height: 48px;
+  padding: 13px var(--sp-4);
   font: inherit;
   font-size: 15px;
   font-weight: 650;
-  color: #fff;
+  color: var(--text);
   text-decoration: none;
   background: var(--accent);
   border: 1px solid transparent;
   border-radius: var(--r-md);
-  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.16);
   cursor: pointer;
   transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease),
-    transform var(--dur) var(--ease);
+    transform var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
+
+.public-panel .button svg,
+.public-panel button svg {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+}
+
 .public-panel .button:hover,
 .public-panel button:hover {
   background: var(--accent-hover);
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px -6px rgba(99, 102, 241, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  box-shadow: 0 10px 24px -8px rgba(99, 102, 241, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.16);
 }
+
 .public-panel .button:active,
 .public-panel button:active {
+  background: var(--accent-active);
   transform: translateY(0.5px);
 }
+
 .public-panel .button:disabled,
 .public-panel button:disabled {
-  opacity: 0.38;
+  opacity: 0.4;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
 }
+
+.public-panel .button:focus,
 .public-panel .button:focus-visible,
+.public-panel button:focus,
 .public-panel button:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px var(--accent-ring);
 }
 
-/* ---------- 4b. 状态：加载中 / 取件失败 ---------- */
+.public-panel .button.secondary,
+.public-panel button.secondary {
+  color: var(--text);
+  background: var(--surface-3);
+  border-color: var(--border-strong);
+  box-shadow: none;
+}
+
+.public-panel .button.secondary:hover,
+.public-panel button.secondary:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-highlight);
+  box-shadow: none;
+}
+
+/* ---------- 6. 取件落地页：验证区与文件信息卡 ---------- */
+.verify-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  margin-top: var(--sp-5);
+  padding: var(--sp-4);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+}
+
+.verify-caption {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 550;
+  color: var(--text-muted);
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border-strong);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.cf-turnstile {
+  display: flex;
+  justify-content: center;
+  min-height: 65px;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* 分享标题说明卡片 */
+.share-title {
+  width: 100%;
+  margin: var(--sp-4) 0 0;
+  padding: var(--sp-3) var(--sp-4);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--text);
+  text-align: left;
+  overflow-wrap: anywhere;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--r-md);
+}
+
+/* 文件详情摘要卡片 */
+.file-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  width: 100%;
+  margin-top: var(--sp-5);
+  padding: var(--sp-4);
+  text-align: left;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-lg);
+}
+
+.file-summary-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.file-type-badge {
+  display: grid;
+  place-items: center;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  color: var(--accent-text);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--r-md);
+}
+
+.file-type-badge svg {
+  width: 20px;
+  height: 20px;
+}
+
+.file-summary-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-summary-name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.4;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.file-summary-sub {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.file-meta-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border);
+}
+
+.meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 550;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+}
+
+.meta-chip.is-warn {
+  color: var(--warn-text);
+  background: var(--warn-soft);
+  border-color: var(--warn-border);
+}
+
+.meta-chip.is-success {
+  color: var(--success-text);
+  background: var(--success-soft);
+  border-color: var(--success-border);
+}
+
+.pickup-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  width: 100%;
+  margin-top: var(--sp-5);
+}
+
+.pickup-actions-row {
+  display: flex;
+  gap: var(--sp-2);
+  width: 100%;
+  margin-top: var(--sp-5);
+}
+
+.pickup-actions-row > * {
+  flex: 1 1 0;
+}
+
+.download-feedback {
+  margin: var(--sp-3) 0 0;
+  font-size: 12px;
+  color: var(--success-text);
+}
+
+/* ---------- 7. 加载中与失败状态 ---------- */
 @keyframes pulse-soft {
   0%,
   100% {
     opacity: 1;
   }
   50% {
-    opacity: 0.5;
+    opacity: 0.52;
   }
 }
 
-/* 查询中：标题轻微呼吸，暗示「正在处理」而非「卡住了」 */
 .public-panel.is-loading h1 {
   animation: pulse-soft 1.6s var(--ease) infinite;
 }
 
-/* 取件失败：Logo 与标题转为危险色，让失败一眼可辨 */
+.public-panel.is-ready .logo {
+  background: var(--accent-gradient);
+}
+
 .public-panel.is-error .logo {
-  background: linear-gradient(140deg, #f43f5e, #be123c);
-  box-shadow: 0 10px 24px -8px rgba(244, 63, 94, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  background: var(--danger-gradient);
+  box-shadow: 0 12px 26px -8px rgba(244, 63, 94, 0.58), inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
+
+.public-panel.is-error::before {
+  background: linear-gradient(90deg, transparent, var(--danger-border), transparent);
+}
+
 .public-panel.is-error .eyebrow {
-  color: #fda4af;
+  color: var(--danger-text);
+  background: var(--danger-soft);
+  border-color: var(--danger-border);
 }
+
+.public-panel.is-error .eyebrow-dot {
+  background: var(--danger);
+  box-shadow: 0 0 8px var(--danger);
+}
+
 .public-panel.is-error h1 {
   font-size: 20px;
-  color: #fda4af;
+  color: var(--danger-text);
 }
-/* 失败态下「确认来源可信后再下载」已无意义，隐藏以免误导 */
-.public-panel.is-error .hint {
+
+.public-panel.is-error .hint,
+.public-panel.is-error .back-link {
   display: none;
 }
 
-/* ---------- 5. 附注与回退链接 ---------- */
+/* ---------- 8. 底部安全说明与返回链接 ---------- */
 .public-panel .hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   margin: var(--sp-5) 0 0;
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-dim);
+}
+
+.public-panel .hint svg {
+  width: 14px;
+  height: 14px;
+  color: var(--success);
+  flex: 0 0 auto;
 }
 
 .back-link {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  margin-top: var(--sp-5);
-  padding: var(--sp-2) var(--sp-3);
+  min-height: 36px;
+  margin-top: var(--sp-4);
+  padding: 6px var(--sp-3);
   font-size: 12.5px;
   font-weight: 600;
   color: var(--text-dim);
@@ -231,79 +659,88 @@
   border-radius: var(--r-sm);
   transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
 }
+
+.back-link svg {
+  width: 14px;
+  height: 14px;
+}
+
 .back-link:hover {
   color: var(--text);
   background: rgba(255, 255, 255, 0.05);
 }
 
-/* ---------- 6. 管理员入口 ---------- */
-.admin-link {
-  position: fixed;
-  top: var(--sp-6);
-  right: var(--sp-6);
-  z-index: 10;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 9px 15px;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-decoration: none;
-  background: rgba(12, 14, 18, 0.78);
-  border: 1px solid var(--border);
-  border-radius: var(--r-pill);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease),
-    background var(--dur) var(--ease);
-}
-.admin-link:hover {
+.back-link:focus,
+.back-link:focus-visible {
+  outline: none;
   color: var(--text);
-  background: rgba(21, 24, 30, 0.92);
-  border-color: var(--accent-ring);
+  box-shadow: 0 0 0 3px var(--accent-ring);
 }
 
-/* ---------- 7. 响应式（移动端优先验证 390px）---------- */
+/* ---------- 9. 响应式断点适配（以 390×844 为移动端基线） ---------- */
 @media (max-width: 460px) {
   .center-page {
-    padding: var(--sp-4);
+    padding:
+      max(56px, env(safe-area-inset-top))
+      max(var(--sp-4), env(safe-area-inset-right))
+      max(var(--sp-5), env(safe-area-inset-bottom))
+      max(var(--sp-4), env(safe-area-inset-left));
   }
+
   .public-panel {
-    padding: 30px 20px var(--sp-6);
+    padding: 30px 20px 24px;
+    border-radius: var(--r-xl);
   }
+
   .public-panel h1 {
     font-size: 22px;
   }
+
   .code-grid {
-    gap: 7px;
+    gap: 8px;
   }
+
   .code-grid input {
-    height: 52px;
-    font-size: 21px;
+    height: 54px;
+    font-size: 22px;
     border-radius: var(--r-md);
   }
-  /* 移动端入口缩小，但仍保证可点 */
+
   .admin-link {
-    top: var(--sp-3);
-    right: var(--sp-3);
-    padding: var(--sp-2) var(--sp-3);
+    top: max(var(--sp-3), env(safe-area-inset-top));
+    right: max(var(--sp-3), env(safe-area-inset-right));
+    min-height: 36px;
+    padding: 7px 12px;
     font-size: 12px;
+  }
+
+  .pickup-actions-row {
+    flex-direction: column;
   }
 }
 
-/* 横屏矮视口：收紧纵向留白，避免出现滚动条 */
-@media (max-height: 620px) {
+/* 横屏矮视口收紧纵向留白，保持一屏可读 */
+@media (max-height: 640px) {
   .center-page {
-    align-items: flex-start;
-    padding-top: var(--sp-6);
+    justify-content: flex-start;
+    padding-top: 52px;
   }
+
+  .public-panel {
+    padding: 24px 24px 20px;
+  }
+
   .public-panel .logo {
     width: 44px;
     height: 44px;
-    font-size: 21px;
     margin-bottom: var(--sp-3);
   }
+
+  .public-panel .logo svg {
+    width: 22px;
+    height: 22px;
+  }
+
   .code-grid input {
     height: 52px;
   }

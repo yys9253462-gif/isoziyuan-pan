@@ -2,77 +2,69 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>爱搜云盘 · 文件提取</title>
-  <meta name="description" content="爱搜云盘：输入取件码即可快速提取文件，支持多规格存储与安全分享，链接可设置有效期或永久有效。">
-  <link rel="stylesheet" href="/tokens.css?v=1">
-  <link rel="stylesheet" href="/style.css?v=7">
+  <meta name="description" content="爱搜云盘：输入 5 位数字取件码即可极速提取文件，支持有效期与限次安全分享。">
+  <link rel="stylesheet" href="/tokens.css?v=2">
+  <link rel="stylesheet" href="/style.css?v=9">
 </head>
 <body class="center-page">
-  <a class="admin-link" href="/admin.html">管理员登录</a>
+  <a class="admin-link" href="/admin.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+    </svg>
+    <span>管理控制台</span>
+  </a>
 
   <main class="panel public-panel">
-    <div class="logo">⇩</div>
-    <p class="eyebrow">爱搜云盘 · 极速提取</p>
-    <h1>提取文件</h1>
-    <p class="muted">请输入 5 位取件码</p>
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3v12"></path>
+        <path d="m7 10 5 5 5-5"></path>
+        <path d="M5 19h14"></path>
+      </svg>
+    </div>
 
-    <form id="pickupForm">
-      <div class="code-grid" role="group" aria-label="5 位取件码">
-        <input inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="第 1 位" autocomplete="one-time-code" autofocus>
-        <input inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="第 2 位">
-        <input inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="第 3 位">
-        <input inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="第 4 位">
-        <input inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="第 5 位">
+    <p class="eyebrow">
+      <span class="eyebrow-dot" aria-hidden="true"></span>
+      <span>爱搜云盘 · 极速提取</span>
+    </p>
+    <h1>提取文件</h1>
+    <p class="muted">请输入 5 位数字取件码，支持直接粘贴分享文案</p>
+
+    <form id="pickupForm" novalidate>
+      <div class="code-grid" id="codeGrid" role="group" aria-label="5 位数字取件码">
+        <input inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="取件码第 1 位" autocomplete="one-time-code" autofocus>
+        <input inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="取件码第 2 位" autocomplete="off">
+        <input inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="取件码第 3 位" autocomplete="off">
+        <input inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="取件码第 4 位" autocomplete="off">
+        <input inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="取件码第 5 位" autocomplete="off">
       </div>
-      <button id="pickupButton" class="button" disabled>立即提取</button>
+
+      <div class="code-helper">
+        <span class="code-helper-text" id="codeHelper">可直接粘贴取件链接或 5 位数字</span>
+        <button type="button" class="code-clear" id="clearCode" hidden>清空</button>
+      </div>
+
+      <button type="submit" id="pickupButton" class="button" disabled>
+        <span id="pickupButtonText">立即提取</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5 12h14"></path>
+          <path d="m12 5 7 7-7 7"></path>
+        </svg>
+      </button>
     </form>
 
-    <p class="hint">文件安全存储于 Cloudflare R2 / AWS S3</p>
+    <p class="hint">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        <path d="m9 12 2 2 4-4"></path>
+      </svg>
+      <span>全链路加密传输 · 独立对象存储隔离</span>
+    </p>
   </main>
 
-  <script>
-    const boxes = [...document.querySelectorAll('.code-grid input')];
-    const button = document.querySelector('#pickupButton');
-
-    function sync() {
-      button.disabled = boxes.some(x => !x.value.trim());
-    }
-
-    function fill(text) {
-      const digits = text.replace(/\D/g, '').slice(0, 5);
-      digits.split('').forEach((v, i) => {
-        if (boxes[i]) boxes[i].value = v;
-      });
-      const nextIdx = Math.min(digits.length, 4);
-      boxes[nextIdx].focus();
-      sync();
-    }
-
-    boxes.forEach((box, i) => {
-      box.oninput = () => {
-        box.value = box.value.replace(/\D/g, '').slice(-1);
-        if (box.value && i < 4) boxes[i + 1].focus();
-        sync();
-      };
-      box.onkeydown = e => {
-        if (e.key === 'Backspace' && !box.value && i > 0) boxes[i - 1].focus();
-        if (e.key === 'ArrowLeft' && i > 0) boxes[i - 1].focus();
-        if (e.key === 'ArrowRight' && i < 4) boxes[i + 1].focus();
-      };
-      box.onpaste = e => {
-        e.preventDefault();
-        fill(e.clipboardData.getData('text'));
-      };
-    });
-
-    document.querySelector('#pickupForm').onsubmit = e => {
-      e.preventDefault();
-      const code = boxes.map(x => x.value).join('');
-      if (/^\d{5}$/.test(code)) {
-        location.href = '/pickup/' + code;
-      }
-    };
-  </script>
+  <script src="/index.js?v=1"></script>
 </body>
 </html>

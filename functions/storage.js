@@ -1,11 +1,11 @@
 import { decryptConfig, encryptConfig, presignedUrl } from "./aws.js";
-import { PREFIX, normalizePath } from "./_lib.js";
+import { PREFIX, getSessionSecret, normalizePath } from "./_lib.js";
 
 const DEFAULTS = { enabled: false, bucket: "", region: "us-east-1", prefix: "", capacityGb: 250, monthlyTransferGb: 500, accessKey: "", secretKey: "" };
 
-// 用量统计：与 wrangler.jsonc 的 r2_buckets.bucket_name 保持一致
+// 储存桶名称与配置文件保持一致
 export const R2_BUCKET_NAME = "forum-uploads";
-// Cloudflare R2 免费额度：每月 10 GB 标准存储（1 GB = 1,000,000,000 字节）
+// 免费额度参考：每月十吉字节标准存储（十进制计量）
 export const R2_FREE_TIER_BYTES = 10 * 1000 ** 3;
 export const USAGE_CACHE_KEY = "usage_cache";
 // 缓存有效期（秒）：避免每次打开后台都全量遍历储存桶
@@ -14,34 +14,57 @@ const LIST_PAGE_SIZE = 1000;
 const LIST_MAX_PAGES = 200;
 
 export async function getAwsConfig(env) {
+  const secret = getSessionSecret(env);
   const row = await env.DB.prepare("SELECT value FROM settings WHERE key = 'aws_config'").first();
-  const saved = row ? await decryptConfig(row.value, env.SESSION_SECRET) : null;
-  return { ...DEFAULTS, ...(saved || {}), prefix: normalizePath(saved?.prefix || "", true), enabled: Boolean(saved?.enabled && saved?.bucket && saved?.accessKey && saved?.secretKey) };
+  const saved = row && secret ? await decryptConfig(row.value, secret) : null;
+  return {
+    ...DEFAULTS,
+    ...(saved || {}),
+    prefix: normalizePath(saved?.prefix || "", true),
+    enabled: Boolean(saved?.enabled && saved?.bucket && saved?.accessKey && saved?.secretKey),
+  };
 }
 
 export function publicAwsConfig(config) {
-  return { enabled: config.enabled, bucket: config.bucket, region: config.region, prefix: config.prefix, capacityGb: config.capacityGb, monthlyTransferGb: config.monthlyTransferGb, hasCredentials: Boolean(config.accessKey && config.secretKey) };
+  return {
+    enabled: config.enabled,
+    bucket: config.bucket,
+    region: config.region,
+    prefix: config.prefix,
+    capacityGb: config.capacityGb,
+    monthlyTransferGb: config.monthlyTransferGb,
+    hasCredentials: Boolean(config.accessKey && config.secretKey),
+  };
 }
 
 export async function saveAwsConfig(env, config) {
-  const value = await encryptConfig(config, env.SESSION_SECRET);
-  await env.DB.prepare("INSERT INTO settings (key, value, updated_at) VALUES ('aws_config', ?1, ?2) ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at").bind(value, Math.floor(Date.now() / 1000)).run();
+  const secret = getSessionSecret(env);
+  const value = await encryptConfig(config, secret);
+  await env.DB
+    .prepare("INSERT INTO settings (key, value, updated_at) VALUES ('aws_config', ?1, ?2) ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at")
+    .bind(value, Math.floor(Date.now() / 1000))
+    .run();
 }
 
+// 原子预留月度下载流量，杜绝并发下载绕过流量上限
 export async function reserveAwsTransfer(env, config, bytes) {
   const month = new Date().toISOString().slice(0, 7);
+  const safeBytes = Number.isFinite(Number(bytes)) && Number(bytes) > 0 ? Math.floor(Number(bytes)) : 0;
   const gbLimit = Number(config.monthlyTransferGb);
-  // 若未设置或为 0 / 负数，表示不限制 AWS 流量
-  if (!gbLimit || gbLimit <= 0) {
-    await env.DB.prepare("INSERT INTO storage_usage (month, bytes, downloads) VALUES (?1, ?2, 1) ON CONFLICT(month) DO UPDATE SET bytes=bytes+excluded.bytes, downloads=downloads+1").bind(month, Number(bytes || 0)).run();
+  if (!Number.isFinite(gbLimit) || gbLimit <= 0) {
+    await env.DB
+      .prepare("INSERT INTO storage_usage (month, bytes, downloads) VALUES (?1, ?2, 1) ON CONFLICT(month) DO UPDATE SET bytes=bytes+excluded.bytes, downloads=downloads+1")
+      .bind(month, safeBytes)
+      .run();
     return true;
   }
-  const limit = gbLimit * 1000 ** 3;
-  const current = await env.DB.prepare("SELECT bytes FROM storage_usage WHERE month = ?1").bind(month).first();
-  const used = Number(current?.bytes || 0);
-  if (used + Number(bytes || 0) > limit) return false;
-  await env.DB.prepare("INSERT INTO storage_usage (month, bytes, downloads) VALUES (?1, ?2, 1) ON CONFLICT(month) DO UPDATE SET bytes=bytes+excluded.bytes, downloads=downloads+1").bind(month, Number(bytes || 0)).run();
-  return true;
+  const limit = Math.floor(gbLimit * 1000 ** 3);
+  await env.DB.prepare("INSERT INTO storage_usage (month, bytes, downloads) VALUES (?1, 0, 0) ON CONFLICT(month) DO NOTHING").bind(month).run();
+  const updated = await env.DB
+    .prepare("UPDATE storage_usage SET bytes = bytes + ?2, downloads = downloads + 1 WHERE month = ?1 AND bytes + ?2 <= ?3")
+    .bind(month, safeBytes, limit)
+    .run();
+  return Boolean(updated?.meta?.changes);
 }
 
 export async function awsUsage(env) {
@@ -49,12 +72,9 @@ export async function awsUsage(env) {
   return (await env.DB.prepare("SELECT bytes, downloads FROM storage_usage WHERE month = ?1").bind(month).first()) || { bytes: 0, downloads: 0 };
 }
 
-/**
- * 真实遍历 R2 储存桶，只累加本网盘自己的 pan-cloudflare/ 前缀对象。
- * 桶 forum-uploads 与论坛共用，因此必须带前缀，否则会混入论坛文件。
- */
+// 真实遍历默认储存桶，仅累加本网盘专属前缀下的对象
 export async function scanR2Usage(env) {
-  if (!env.R2 || typeof env.R2.list !== "function") throw new Error("未绑定 R2 储存桶");
+  if (!env.R2 || typeof env.R2.list !== "function") throw new Error("未绑定默认储存桶");
   let cursor;
   let bytes = 0;
   let objects = 0;
@@ -76,7 +96,7 @@ export async function scanR2Usage(env) {
   return { bucket: R2_BUCKET_NAME, prefix: PREFIX, bytes, objects, pages, limited };
 }
 
-/** 通过 S3 ListObjectsV2 分页遍历 AWS 桶，累加对象大小。 */
+// 分页遍历外部对象存储桶并累加对象大小
 export async function scanAwsUsage(config) {
   const prefix = normalizePath(config.prefix || "");
   let bytes = 0;
@@ -88,8 +108,9 @@ export async function scanAwsUsage(config) {
     const query = { "list-type": "2", "max-keys": String(LIST_PAGE_SIZE) };
     if (prefix) query.prefix = prefix;
     if (token) query["continuation-token"] = token;
-    const response = await fetch(await presignedUrl(config, "GET", "", { expires: 300, query }));
-    if (!response.ok) throw new Error(`AWS 返回 ${response.status}`);
+    const signal = typeof AbortSignal?.timeout === "function" ? AbortSignal.timeout(15000) : undefined;
+    const response = await fetch(await presignedUrl(config, "GET", "", { expires: 300, query }), { signal });
+    if (!response.ok) throw new Error(`外部储存桶返回状态码 ${response.status}`);
     const xml = await response.text();
     for (const match of xml.matchAll(/<Size>(\d+)<\/Size>/g)) bytes += Number(match[1]);
     objects += (xml.match(/<Contents>/g) || []).length;
@@ -101,12 +122,16 @@ export async function scanAwsUsage(config) {
       limited = true;
       break;
     }
-    token = next[1].replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+    token = next[1]
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'");
   }
   return { enabled: true, bucket: config.bucket, prefix: prefix || "(整桶)", bytes, objects, pages, limited };
 }
 
-/** 读取上次统计结果缓存（存于 D1 settings 表）。 */
 export async function readUsageCache(env) {
   try {
     const row = await env.DB.prepare("SELECT value FROM settings WHERE key = ?1").bind(USAGE_CACHE_KEY).first();

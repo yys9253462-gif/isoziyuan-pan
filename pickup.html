@@ -2,70 +2,91 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>提取文件 · 爱搜云盘</title>
-  <meta name="description" content="输入 5 位取件码即可提取爱搜云盘中的文件，支持有效期校验与过期提示。">
-  <link rel="stylesheet" href="/tokens.css?v=1">
-  <link rel="stylesheet" href="/style.css?v=7">
+  <meta name="description" content="输入 5 位取件码即可安全提取爱搜云盘中的文件，支持有效期校验与限次提示。">
+  <link rel="stylesheet" href="/tokens.css?v=2">
+  <link rel="stylesheet" href="/style.css?v=9">
 </head>
 <body class="center-page">
-  <main class="panel public-panel is-loading">
-    <div class="logo">▤</div>
-    <p class="eyebrow" id="codeLabel">取件文件</p>
-    <h1 id="fileName">正在查询…</h1>
-    <p class="muted" id="fileMeta"></p>
-    <div id="turnstile" class="cf-turnstile"></div>
-    <a id="download" class="button" hidden>下载文件</a>
-    <p class="hint">请确认文件来源可信后再下载</p>
-    <a class="back-link" href="/">← 返回取件页</a>
+  <main class="panel public-panel is-loading" id="pickupPanel">
+    <div class="logo" id="panelLogo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        <polyline points="14 2 14 8 20 8"></polyline>
+        <path d="M12 18v-6"></path>
+        <path d="m9 15 3 3 3-3"></path>
+      </svg>
+    </div>
+
+    <p class="eyebrow" id="codeBadge">
+      <span class="eyebrow-dot" aria-hidden="true"></span>
+      <span id="codeLabel">取件文件</span>
+    </p>
+
+    <h1 id="pageTitle">正在准备取件…</h1>
+    <p class="muted" id="pageSub">完成安全验证后即可获取下载链接</p>
+
+    <!-- 人机验证与查询阶段 -->
+    <div id="verifyStage" class="verify-stage">
+      <p class="verify-caption" id="verifyCaption">
+        <span class="spinner" aria-hidden="true"></span>
+        <span id="verifyText">正在加载人机安全验证…</span>
+      </p>
+      <div id="turnstileBox" class="cf-turnstile"></div>
+    </div>
+
+    <!-- 分享标题说明（有标题时展示） -->
+    <p class="share-title" id="shareTitle" hidden></p>
+
+    <!-- 文件信息摘要卡片（验证通过后展示） -->
+    <section class="file-summary" id="fileSummary" hidden aria-label="文件信息">
+      <div class="file-summary-head">
+        <div class="file-type-badge" id="fileTypeBadge" aria-hidden="true"></div>
+        <div class="file-summary-info">
+          <p class="file-summary-name" id="fileName">—</p>
+          <p class="file-summary-sub" id="fileTypeText">文件已就绪</p>
+        </div>
+      </div>
+      <div class="file-meta-chips" id="fileMeta"></div>
+    </section>
+
+    <!-- 正常下载操作区 -->
+    <div class="pickup-actions" id="downloadActions" hidden>
+      <a id="download" class="button" rel="noopener noreferrer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        <span>立即下载文件</span>
+      </a>
+      <p class="download-feedback" id="downloadFeedback" hidden>已触发下载，如未自动开始可再次点击上方按钮</p>
+    </div>
+
+    <!-- 异常重试操作区 -->
+    <div class="pickup-actions-row" id="errorActions" hidden>
+      <button type="button" class="button secondary" id="retryButton">刷新重试</button>
+      <a class="button" href="/">重新输入取件码</a>
+    </div>
+
+    <p class="hint">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        <path d="m9 12 2 2 4-4"></path>
+      </svg>
+      <span>请确认文件来源可信后再下载</span>
+    </p>
+
+    <a class="back-link" href="/">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="m15 18-6-6 6-6"></path>
+      </svg>
+      <span>返回取件首页</span>
+    </a>
   </main>
 
-  <script>
-    const code = new URLSearchParams(location.search).get('code') || '';
-    const label = document.querySelector('#codeLabel');
-    const name = document.querySelector('#fileName');
-    const meta = document.querySelector('#fileMeta');
-    const download = document.querySelector('#download');
-    const panel = document.querySelector('.public-panel');
-
-    if (code) {
-      label.textContent = '取件码 ' + code;
-    }
-
-    // 先过 Turnstile 人机验证，拿到 token 再查询取件码
-    window.onTurnstileLoad = () => {
-      turnstile.render('#turnstile', {
-        sitekey: '0x4AAAAAAFb6Yo8w2o7Tq8Z6',
-        callback: token => { document.querySelector('#turnstile').hidden = true; lookup(token); },
-        'error-callback': () => showError(new Error('人机验证加载失败，请刷新页面重试'))
-      });
-    };
-
-    const lookup = token => fetch('/api/pickup?code=' + encodeURIComponent(code) + '&cf-turnstile-response=' + encodeURIComponent(token))
-      .then(r => r.json())
-      .then(data => {
-        if (!data.ok) throw new Error(data.error || '取件失败');
-        panel.classList.remove('is-loading');
-        name.textContent = data.name;
-        const sizeMb = (data.size / 1024 / 1024).toFixed(2) + ' MB';
-        const rem = data.remaining === null ? '' : ' · 剩余 ' + data.remaining + ' 次';
-        meta.textContent = sizeMb + rem;
-        download.href = data.downloadUrl;
-        download.hidden = false;
-      })
-      .catch(error => showError(error));
-
-    function showError(error) {
-        // 把浏览器/网络的原始报错翻译成用户看得懂的话，避免直接把 "Failed to fetch" 丢给用户
-        const raw = String((error && error.message) || '');
-        const friendly = /fetch|network|load failed|timeout/i.test(raw) ? '网络异常，请稍后重试' : (raw || '取件失败');
-        panel.classList.remove('is-loading');
-        panel.classList.add('is-error');
-        label.textContent = '取件失败';
-        name.textContent = friendly;
-        meta.textContent = '请返回重新输入取件码';
-    }
-  </script>
+  <script src="/pickup.js?v=1"></script>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad&render=explicit" async defer></script>
 </body>
 </html>
